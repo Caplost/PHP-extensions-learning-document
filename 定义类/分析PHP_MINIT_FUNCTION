@@ -1,0 +1,37 @@
+分析PHP_MINIT_FUNCTION
+
+
+PHP_MINIT_FUNCTION(yii)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    myclass_ce = zend_register_internal_class(&ce TSRMLS_CC);
+    return SUCCESS;
+}
+
+
+
+接下来我们对数据类型和宏进行分析
+
+#define ZEND_MINIT_FUNCTION			ZEND_MODULE_STARTUP_D
+
+#define ZEND_MODULE_STARTUP_D(module)		int ZEND_MODULE_STARTUP_N(module)(INIT_FUNC_ARGS)
+
+#define ZEND_MODULE_STARTUP_N(module)       zm_startup_##module
+
+#define INIT_FUNC_ARGS		int type, int module_number
+
+
+以上就是我们将每个宏分析到最底层了。然后我们再从最底层，一层层的向上套
+
+#define ZEND_MINIT_FUNCTION(module)		int zm_startup_##module(int type, int module_number)
+
+因此ZEND_MINIT_FUNCTION(yii){...}实际上是
+
+int zm_startup_yii(int type, int module_number)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    myclass_ce = zend_register_internal_class(&ce TSRMLS_CC);
+    return SUCCESS;
+}

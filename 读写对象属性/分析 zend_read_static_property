@@ -1,0 +1,40 @@
+分析 zend_read_static_property
+
+PHP_METHOD(User, __construct)
+{
+    zval *age, *area;
+    zend_class_entry *ce;
+    ce = Z_OBJCE_P(getThis());
+
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &age, &area) == FAILURE )
+    {
+        printf("Error\n");
+        RETURN_NULL();
+    }
+
+    zend_update_property(ce, getThis(), "age", sizeof("age")-1, age TSRMLS_CC);
+    zend_update_static_property(ce, "area", sizeof("area")-1, area TSRMLS_CC);
+
+    age = NULL;
+    area = NULL;
+
+    age = zend_read_property(ce, getThis(), "age", sizeof("age")-1, 0 TSRMLS_DC);
+    php_var_dump(&age, 1 TSRMLS_CC);
+
+    area = zend_read_static_property(ce, "area", sizeof("area")-1, 0 TSRMLS_DC);
+    php_var_dump(&area, 1 TSRMLS_CC);
+}
+
+ZEND_API zval *zend_read_static_property(zend_class_entry *scope, const char *name, size_t name_length, zend_bool silent) /* {{{ */
+{
+	zval *property;
+	zend_class_entry *old_scope = EG(scope);
+	zend_string *key = zend_string_init(name, name_length, 0);
+
+	EG(scope) = scope;
+	property = zend_std_get_static_property(scope, key, silent);
+	EG(scope) = old_scope;
+	zend_string_free(key);
+
+	return property;
+}

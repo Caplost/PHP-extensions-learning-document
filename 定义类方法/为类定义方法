@@ -1,0 +1,30 @@
+为类定义方法
+
+
+PHP_METHOD(yii, get)
+{
+    php_printf("我是public类型的方法\n");
+}
+
+PHP_METHOD(yii , __construct)
+{
+    php_printf("我是__construct方法\n");
+}
+
+zend_class_entry *yii_ce;
+
+static zend_function_entry yii_method[] = {
+	PHP_ME(yii, get, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(yii, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    { NULL, NULL, NULL}
+};
+
+PHP_MINIT_FUNCTION(yii)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    yii_ce = zend_register_internal_class(&ce TSRMLS_CC);
+    zend_declare_property_null(yii_ce, "uid", strlen("uid"), ZEND_ACC_PUBLIC TSRMLS_CC);
+
+    return SUCCESS;
+}

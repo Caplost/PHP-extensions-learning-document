@@ -1,0 +1,73 @@
+扩展中定义一个类
+
+
+zend_class_entry *yii_ce; // ce 是class entry 的缩写
+ 
+static zend_function_entry yii_method[]={
+    { NULL, NULL, NULL}
+};
+ 
+PHP_MINIT_FUNCTION(yii)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    yii_ce = zend_register_internal_class(&ce TSRMLS_CC); // TSRMLS_CC 用于线程安全，所以默认带上就行了 
+    return SUCCESS;
+}
+
+
+由于经常使用yii_ce，所以PHP_MINIT_FUNCTION内部做一个yii_ce的变量。方便外部使用。
+这里使用了全局变量。注意全局变量，只要外部声明了全局变量，函数内部，就可以使用，除非函数内部在定义一个相同名字的局部变量才会导致全局变量无法调用
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

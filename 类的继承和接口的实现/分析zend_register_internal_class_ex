@@ -1,0 +1,42 @@
+分析zend_register_internal_class_ex
+
+PHP_MINIT_FUNCTION(test)
+{
+    zend_class_entry object_init_ce, component_init_ce, model_init_ce;
+
+    INIT_CLASS_ENTRY(object_init_ce, "object", object_methods);
+    object_ce = zend_register_internal_interface(&object_init_ce TSRMLS_CC);
+
+    INIT_CLASS_ENTRY(component_init_ce, "component", component_methods);
+    component_ce = zend_register_internal_class(&component_init_ce TSRMLS_CC);
+    zend_class_implements(component_ce TSRMLS_CC, 1, object_ce);
+
+    INIT_CLASS_ENTRY(model_init_ce, "model", model_methods);
+    model_ce = zend_register_internal_class_ex(&model_init_ce, component_ce, "component" TSRMLS_CC);
+    //注意：ZEND_ACC_FINAL是用来修饰方法的，而ZEND_ACC_FINAL_CLASS是用来修饰类的
+    model_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+
+    return SUCCESS;
+}
+
+/* *
+ * If parent_ce is not NULL then it inherits from parent_ce
+ * If parent_ce is NULL and parent_name isn't then it looks for the parent and inherits from it
+ * If both parent_ce and parent_name are NULL it does a regular class registration
+ * If parent_name is specified but not found NULL is returned
+ */
+ZEND_API zend_class_entry *zend_register_internal_class_ex(zend_class_entry *class_entry, zend_class_entry *parent_ce) 
+{
+	zend_class_entry *register_class;
+
+	register_class = zend_register_internal_class(class_entry);
+
+	if (parent_ce) {
+		zend_do_inheritance(register_class, parent_ce);
+	}
+
+	return register_class;
+}
+
+
+

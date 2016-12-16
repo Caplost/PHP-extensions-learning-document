@@ -1,0 +1,109 @@
+定义类的继承和接口的实现
+
+
+PHP代码实现
+
+interface object
+{
+    public function hello();
+}
+ 
+class component implements object
+{
+    public function hello()
+    {
+        echo "Good Morning!\n";
+    }
+}
+ 
+final class model extends component
+{
+    public function print()
+    {
+        $this->hello();
+    }
+}
+
+
+扩展C代码实现
+
+zend_class_entry *object_ce, *component_ce, *model_ce;
+
+PHP_METHOD(component, echo)
+{
+    php_printf("hello world!\n");
+}
+
+PHP_METHOD(model, print)
+{
+    zval *this_zval;
+    this_zval = getThis();
+    zend_call_method_with_0_params(&this_zval, model_ce, NULL, "echo", NULL);
+}
+
+static zend_function_entry object_methods[] = {
+    PHP_ABSTRACT_ME(object, echo,  NULL)
+    {NULL, NULL, NULL}
+};
+
+static zend_function_entry component_methods[] = {
+    PHP_ME(component, echo, NULL, ZEND_ACC_PUBLIC)
+    {NULL, NULL, NULL}
+};
+
+static zend_function_entry model_methods[] = {
+    PHP_ME(model, print, NULL, ZEND_ACC_PUBLIC)
+    {NULL, NULL, NULL}
+};
+
+PHP_MINIT_FUNCTION(test)
+{
+    zend_class_entry object_init_ce, component_init_ce, model_init_ce;
+
+    INIT_CLASS_ENTRY(object_init_ce, "object", object_methods);
+    object_ce = zend_register_internal_interface(&object_init_ce TSRMLS_CC);
+
+    INIT_CLASS_ENTRY(component_init_ce, "component", component_methods);
+    component_ce = zend_register_internal_class(&component_init_ce TSRMLS_CC);
+    zend_class_implements(component_ce TSRMLS_CC, 1, object_ce);
+
+    INIT_CLASS_ENTRY(model_init_ce, "model", model_methods);
+    model_ce = zend_register_internal_class_ex(&model_init_ce, component_ce, "component" TSRMLS_CC);
+    //注意：ZEND_ACC_FINAL是用来修饰方法的，而ZEND_ACC_FINAL_CLASS是用来修饰类的
+    model_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+
+    return SUCCESS;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

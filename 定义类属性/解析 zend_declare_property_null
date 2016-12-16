@@ -1,0 +1,100 @@
+解析 zend_declare_property_null
+
+声明属性和属性值
+
+ZEND_API int zend_declare_property_null(zend_class_entry *ce, const char *name, size_t name_length, int access_type)
+{
+	zval property;
+	ZVAL_NULL(&property);
+
+	return zend_declare_property(ce, name, name_length, &property, access_type);
+}
+
+#define ZVAL_NULL(z) do {						\
+		Z_TYPE_INFO_P(z) = IS_NULL;				\
+	} while (0)
+
+#define Z_TYPE_INFO_P(zval_p)		Z_TYPE_INFO(*(zval_p))
+
+#define Z_TYPE_INFO(zval)			(zval).u1.type_info	
+
+对宏从下往上进行替换
+
+#define Z_TYPE_INFO_P(zval_p) (*(zval_p)).u1.type_info	
+
+||
+
+
+#define ZVAL_NULL(z) do {							\
+		(*(z)).u1.type_info = IS_NULL;				\
+	} while (0)
+
+
+所以 zend_declare_property_null{...} 实际为
+
+ZEND_API int zend_declare_property_null(zend_class_entry *ce, const char *name, size_t name_length, int access_type)
+{
+	zval property;
+	
+	do {							
+		(*(&property)).u1.type_info = IS_NULL;				
+	} while (0)
+
+	return zend_declare_property(ce, name, name_length, &property, access_type);
+}
+
+
+参数
+
+ce  结构体指针，类的入口结构体， 注意这个值必须是通过 zend_register_internal_class(&ce TSRMLS_CC) 注册后的类的值
+
+name 字符串指针， 属性的名字
+
+name_length size_t， 属性名字长度
+
+access_type 整数， 属性的访问权限
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

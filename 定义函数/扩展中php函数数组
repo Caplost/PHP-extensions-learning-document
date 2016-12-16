@@ -1,0 +1,105 @@
+扩展中php函数数组
+
+将声明的函数，添加到zend_function_entry结构体类型的数组中
+
+//arginfo event
+ZEND_BEGIN_ARG_INFO_EX(arginfo_swoole_event_add, 0, 0, 2)
+    ZEND_ARG_INFO(0, fd)
+    ZEND_ARG_INFO(0, cb)
+ZEND_END_ARG_INFO()
+
+const zend_function_entry yii_functions[] = {
+	PHP_FE(confirm_yii_compiled,	NULL）
+	PHP_FE(swoole_event_add, arginfo_swoole_event_add)
+	PHP_FE_END
+};
+
+接下来让我们来分析各个类型和宏
+
+typedef struct _zend_function_entry {
+	const char *fname; // 函数名称
+	void (*handler)(INTERNAL_FUNCTION_PARAMETERS); // 
+	const struct _zend_internal_arg_info *arg_info; // 存储的参数信息的数组，按照函数中定义的参数顺序进行存储
+	uint32_t num_args; // 参数个数
+	uint32_t flags;
+} zend_function_entry;
+
+#define INTERNAL_FUNCTION_PARAMETERS zend_execute_data *execute_data, zval *return_value
+
+宏替换之后实际上是
+
+typedef struct _zend_function_entry {
+	const char *fname; // 函数名
+	void (*handler)(zend_execute_data *execute_data, zval *return_value); // 函数指针，一个函数类型的成员，这里需要调用某个函数，因为函数名几位函数指针，所以（*handler）可以直接被函数名替代
+	const struct _zend_internal_arg_info *arg_info;  // 存储的参数信息的数组，按照函数中定义的参数顺序进行存储
+	uint32_t num_args; // 参数个数
+	uint32_t flags;
+} zend_function_entry;
+
+/* arg_info for internal functions */
+typedef struct _zend_internal_arg_info {
+	const char *name; // 参数名称
+	const char *class_name;
+	zend_uchar type_hint; // 类型提示
+	zend_uchar pass_by_reference; // 
+	zend_bool allow_null; // 允许为空
+	zend_bool is_variadic; // 是可变参数
+} zend_internal_arg_info;
+
+下面解析PHP_FE
+
+FE 就是 FUNCTION ENTRY 的缩写
+
+#define PHP_FE			ZEND_FE
+
+#define ZEND_FN(name) zif_##name
+
+#define ZEND_FE(name, arg_info)						ZEND_FENTRY(name, ZEND_FN(name), arg_info, 0)
+
+#define ZEND_FENTRY(zend_name, name, arg_info, flags)	{ #zend_name, name, arg_info, (uint32_t) (sizeof(arg_info)/sizeof(struct _zend_internal_arg_info)-1), flags },
+
+以上就是我们将每个宏分析到最底层了。然后我们再从最底层，一层层的向上套
+
+#define ZEND_FE(name, arg_info)	{ #name, zif_##name, arg_info, (uint32_t) (sizeof(arg_info)/sizeof(struct _zend_internal_arg_info)-1), 0 },
+
+也就说说PHP_FE(name, arg_info)实际上是被替换成了一个结构体的实例
+
+arg_info参数，是一个数组的指针，该数组是一个函数参数结构体类型的数组，如果需要特别的参数过滤或者要求，就需要定义该参数，否则赋值为NULL
+name 为函数的名字，直接代码写即可。宏内部会自动转为字符串，赋值到结构体上。
+
+
+
+#define PHP_FE_END      ZEND_FE_END
+
+#define ZEND_FE_END            { NULL, NULL, NULL, 0, 0 }
+
+所以函数定义完毕之后就应该以PHP_FE_END结尾
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

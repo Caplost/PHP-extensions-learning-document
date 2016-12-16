@@ -1,0 +1,98 @@
+分析zend_declare_class_constant_string
+
+
+ZEND_API int zend_declare_class_constant_string(zend_class_entry *ce, const char *name, size_t name_length, const char *value)
+{
+	return zend_declare_class_constant_stringl(ce, name, name_length, value, strlen(value));
+}
+
+
+ZEND_API int zend_declare_class_constant_stringl(zend_class_entry *ce, const char *name, size_t name_length, const char *value, size_t value_length) /* {{{ */
+{
+	zval constant;
+
+	ZVAL_NEW_STR(&constant, zend_string_init(value, value_length, ce->type & ZEND_INTERNAL_CLASS));
+	return zend_declare_class_constant(ce, name, name_length, &constant);
+}
+
+#define ZEND_INTERNAL_CLASS         1
+
+#define ZVAL_NEW_STR(z, s) do {					\
+		zval *__z = (z);						\
+		zend_string *__s = (s);					\
+		Z_STR_P(__z) = __s;						\
+		Z_TYPE_INFO_P(__z) = IS_STRING_EX;		\
+	} while (0)
+
+ZEND_API int zend_declare_class_constant(zend_class_entry *ce, const char *name, size_t name_length, zval *value) /* {{{ */
+{
+	if (Z_CONSTANT_P(value)) {
+		ce->ce_flags &= ~ZEND_ACC_CONSTANTS_UPDATED;
+	}
+	return zend_hash_str_update(&ce->constants_table, name, name_length, value) ?
+		SUCCESS : FAILURE;
+}
+
+
+/* class constants updated */
+#define ZEND_ACC_CONSTANTS_UPDATED	  0x100000
+
+
+参数
+
+ce  结构体指针，类的入口结构体， 注意这个值必须是通过 zend_register_internal_class(&ce TSRMLS_CC) 注册后的类的值
+
+name 字符串指针， 常量的名字
+
+name_length size_t， 常量名字长度
+
+value 字符串指针  常量的值
+
+
+
+const char *name   *name的值是常量，并且参数要求是指针
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,38 @@
+显示INI设置
+
+PHP_MINFO_FUNCTION(sample4) 
+{
+    DISPLAY_INI_ENTRIES(); 
+}
+
+这个宏需要INI设置的值，而这个值早已经在前面定义在了PHP_INI_BEGIN和PHP_INI_END宏之间。INI设置被迭代的显示在一个三列的表单中，这三列分别是INI设置的名字，它的原始（全局）设置，还有通过PERDIR指令或者ini_set()修改过的当前的设置。
+
+默认情况下，所有的设置的条目都是根据原有的字符串来简单的输出的。(By default, all entries are simply output according to their string representation as-is.)一些类似布尔值和语法高亮显示的颜色的值，在显示的时候会经过特殊的格式化处理。这种特殊格式化的方法是通过每个INI设置自己的显示处理程序来处理的，这个处理程序是通过动态指向一个回调函数来实现的，跟我们前面看到的 OnModify 类似。
+
+显示处理程序指定使用一个扩展的PHP_INI_ENTRY()宏的版本，PHP_INI_ENTRY()接受一个额外的参数。如果将它设置为NULL，默认的显示处理程序将按照字符串的值原样使用。
+
+
+PHP_INI_ENTRY_EX("sample4.greeting", "Hello World", PHP_INI_ALL, php_sample4_modify_greeting, php_sample4_display_greeting)
+
+
+明显的，这个回调需要在INI设置使用之前提前的定义好。与 OnModify 的回调类似，这个用一个包装宏来完成，并且只用少量的代码就能实现：
+
+
+/* needed for sapi_module */ 
+#include "SAPI.h" 
+
+PHP_INI_DISP(php_sample4_display_greeting)
+{
+    const char *value = ini_entry->value;
+    /* Select the current or original value as appropriate */
+    if (type == ZEND_INI_DISPLAY_ORIG &&
+        ini_entry->modified)  {
+        value = ini_entry->orig_value; 
+    }                 
+    /* Make the greeting bold (when HTML output is enabled) */
+    if (sapi_module.phpinfo_as_text) {
+        php_printf("%s", value); 
+    } else {
+        php_printf("<b>%s</b>", value); 
+    }
+}

@@ -1,0 +1,67 @@
+调用对象的方法
+
+php语言实现
+
+class User
+{
+    public function __construct()
+    {
+        echo "a new baby!\n";
+    }
+
+    public function echo()
+    {
+        echo "hello world!\n";
+    }
+}
+
+function test()
+{
+    $obj = new User();
+    $obj->echo();
+}
+
+
+扩展内部C语言实现
+
+
+zend_class_entry *user_ce;
+
+ZEND_FUNCTION(test)
+{
+    zval *obj;
+    MAKE_STD_ZVAL(obj); // 该宏php7已废弃
+    object_init_ex(obj, user_ce);
+
+    //如果确认此类没有构造函数就不用调用了。
+    call_user_function(NULL, obj, "__construct", "");
+    call_user_function(NULL, obj, "echo", "");
+    zval_ptr_dtor(&obj);
+
+    return;
+}
+
+ZEND_METHOD(User, __construct)
+{
+    printf("a new baby!\n");
+}
+
+ZEND_METHOD(User, echo)
+{
+    printf("hello world!!!!!\n");
+}
+
+static zend_function_entry baby_method[] = {
+    PHP_ME(User, __construct, NULL, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    PHP_ME(User, echo, NULL, ZEND_ACC_PUBLIC)
+    {NULL, NULL, NULL}
+};
+
+PHP_MINIT_FUNCTION(test)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "User", baby_method);
+    user_ce = zend_register_internal_class(&ce TSRMLS_CC);
+
+    return SUCCESS;
+}

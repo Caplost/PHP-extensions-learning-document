@@ -1,0 +1,45 @@
+分析 zend_update_property
+
+ PHP_METHOD(User, __construct)
+{
+    zval *age, *area;
+    zend_class_entry *ce;
+    ce = Z_OBJCE_P(getThis());
+
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &age, &area) == FAILURE )
+    {
+        printf("Error\n");
+        RETURN_NULL();
+    }
+
+    zend_update_property(ce, getThis(), "age", sizeof("age")-1, age TSRMLS_CC);
+    zend_update_static_property(ce, "area", sizeof("area")-1, area TSRMLS_CC);
+
+    age = NULL;
+    area = NULL;
+
+    age = zend_read_property(ce, getThis(), "age", sizeof("age")-1, 0 TSRMLS_DC);
+    php_var_dump(&age, 1 TSRMLS_CC);
+
+    area = zend_read_static_property(ce, "area", sizeof("area")-1, 0 TSRMLS_DC);
+    php_var_dump(&area, 1 TSRMLS_CC);
+}
+
+
+ ZEND_API void zend_update_property(zend_class_entry *scope, zval *object, const char *name, size_t name_length, zval *value)
+{
+	zval property;
+	zend_class_entry *old_scope = EG(scope);
+
+	EG(scope) = scope;
+
+	if (!Z_OBJ_HT_P(object)->write_property) {
+		zend_error_noreturn(E_CORE_ERROR, "Property %s of class %s cannot be updated", name, ZSTR_VAL(Z_OBJCE_P(object)->name));
+	}
+	
+	ZVAL_STRINGL(&property, name, name_length);
+	Z_OBJ_HT_P(object)->write_property(object, &property, value, NULL);
+	zval_ptr_dtor(&property);
+
+	EG(scope) = old_scope;
+}

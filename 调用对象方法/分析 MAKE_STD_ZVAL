@@ -1,0 +1,4 @@
+分析 MAKE_STD_ZVAL
+
+该宏在 php7 已废弃 
+

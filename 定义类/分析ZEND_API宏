@@ -1,0 +1,90 @@
+分析ZEND_API宏
+
+windows 系统
+
+#ifdef LIBZEND_EXPORTS
+#	define ZEND_API __declspec(dllexport)
+#else
+#	define ZEND_API __declspec(dllimport)
+#endif
+
+
+linux 系统
+
+#if defined(__GNUC__) && __GNUC__ >= 4
+# define ZEND_API __attribute__ ((visibility("default")))
+# define ZEND_DLEXPORT __attribute__ ((visibility("default")))
+#else
+# define ZEND_API
+# define ZEND_DLEXPORT
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

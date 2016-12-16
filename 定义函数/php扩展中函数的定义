@@ -1,0 +1,105 @@
+php扩展中定义一个函数的完整流程
+
+当前代码分析只针对php7.0.1，其他版本按以各自版本为准
+
+声明一个函数
+
+PHP_FUNCTION(confirm_yii_compiled)
+{
+	char *arg = NULL;
+	size_t arg_len, len;
+	zend_string *strg;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
+		return;
+	}
+
+	strg = strpprintf(0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "yii", arg);
+
+	RETURN_STR(strg);
+}
+
+将声明的函数，添加到zend_function_entry结构体类型的数组中
+
+const zend_function_entry yii_functions[] = {
+	PHP_FE(confirm_yii_compiled,	NULL）
+	PHP_FE_END
+};
+
+声明一个zend_module_entry结构体类型的变量，并将前面声明的函数数组赋值到对应的成员位置上
+
+zend_module_entry yii_module_entry = {
+	STANDARD_MODULE_HEADER,
+	"yii",
+	yii_functions,
+	PHP_MINIT(yii),
+	PHP_MSHUTDOWN(yii),
+	PHP_RINIT(yii),
+	PHP_RSHUTDOWN(yii),
+	PHP_MINFO(yii),
+	PHP_YII_VERSION,
+	STANDARD_MODULE_PROPERTIES
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

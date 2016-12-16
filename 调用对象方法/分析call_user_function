@@ -1,0 +1,40 @@
+分析call_user_function
+
+
+ZEND_FUNCTION(test)
+{
+    zval *obj;
+    MAKE_STD_ZVAL(obj); // 该宏php7已废弃
+    object_init_ex(obj, user_ce);
+
+    //如果确认此类没有构造函数就不用调用了。
+    call_user_function(NULL, obj, "__construct", "");
+    call_user_function(NULL, obj, "echo", "");
+    zval_ptr_dtor(&obj);
+
+    return;
+}
+
+
+
+int call_user_function(HashTable *function_table, zval *object, zval *function_name, zval *retval_ptr, uint32_t param_count, zval params[]) /* {{{ */
+{
+	return call_user_function_ex(function_table, object, function_name, retval_ptr, param_count, params, 1, NULL);
+}
+
+int call_user_function_ex(HashTable *function_table, zval *object, zval *function_name, zval *retval_ptr, uint32_t param_count, zval params[], int no_separation, zend_array *symbol_table) /* {{{ */
+{
+	zend_fcall_info fci;
+
+	fci.size = sizeof(fci);
+	fci.function_table = function_table;
+	fci.object = object ? Z_OBJ_P(object) : NULL;
+	ZVAL_COPY_VALUE(&fci.function_name, function_name);
+	fci.retval = retval_ptr;
+	fci.param_count = param_count;
+	fci.params = params;
+	fci.no_separation = (zend_bool) no_separation;
+	fci.symbol_table = symbol_table;
+
+	return zend_call_function(&fci, NULL);
+}

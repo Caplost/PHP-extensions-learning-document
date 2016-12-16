@@ -1,0 +1,50 @@
+绑定到扩展的全局设置
+
+所有的INI条目都在ZendEngine中被给予了存储空间，用来在脚本之中追踪它的改变，并且在请求之外维持全局设置。在这个存储空间之中，所有的INI设置都是以字符串形式保存的。你应该会想到，这些值可以使用INI_INT(),INI_FLT(),和INI_BOOL()这类宏很容易地转换为标量值。
+
+这个查询和转换过程非常低效的原因有两个，它必须通过名字位于一个hash表之中，所以每次都要重新获取。这种查找方式对于用户空间脚本是非常好的，因为一个脚本只有在运行时才会被编译，但是对于编译型的语言,做这个工作是毫无意义的。
+
+对于标量来说，这个会导致更加的低效，因为底层的字符串值在每一次被请求时候都必须再转换一次。使用你已经知道的，你可以声明一个线程安全的全局存储介质，并在每次改变的时候使用新值的地址来更新它。然后，任何代码都可以通过在你的线程安全的结构之中查找指针来访问INI设置，这个可以利用编译时优化。
+
+在php_sample4.h文件中，在MODULE_GLOBALS结构中添加const char *greeting;，然后更新位于 sample4.c中的两个方法：
+
+ZEND_INI_MH(php_sample4_modify_greeting) 
+{
+    /* Disallow empty greetings */
+    if (new_value_length == 0) {
+        return FAILURE; 
+    }
+    SAMPLE4_G(greeting) = new_value;
+    return SUCCESS; 
+}
+
+PHP_FUNCTION(sample4_hello_world) 
+{
+    php_printf("%s\n", SAMPLE4_G(greeting)); 
+}
+
+因为这是一个优化 INI 值存取的非常一般的方法，另一对宏是通过Zend引擎来导出的，将INI设置绑定到全局变量。
+
+STD_PHP_INI_ENTRY_EX("sample4.greeting", "Hello World", PHP_INI_ALL, OnUpdateStringUnempty, greeting, zend_sample4_globals, sample4_globals, php_sample4_display_greeting)
+
+这个条目和刚刚你不需要的回调执行相同的工作。相反，他使用一个通用目的的修饰回调 OnUpdateStringUnempty，并且连同信息在存储空间的存储位置。为了允许空白的问候语，你可以简单的指定 OnUpdateString修饰语，这样就比OnUpdateStringUnempty方法简单。
+
+类似的方法，比如INI设置可能会被绑定到类似long,double和zend_bool之类的标量上。在你的php_sample4.h中添加三个条目到MODULE_GLOBALS 结构中：
+
+long mylong; 
+double mydouble; 
+zend_bool mybool;
+
+现在使用STD_PHP_INI_ENTRY()宏在PHP_INI_BEGIN()/PHP_INI_END()块中创建INI条目，不同于它的 _EX版本的仅仅是缺少一个播放者方法以及绑定他们到你的新值：
+
+STD_PHP_INI_ENTRY("sample4.longval", "123", PHP_INI_ALL, OnUpdateLong, mylong, zend_sample4_globals, sample4_globals)
+STD_PHP_INI_ENTRY("sample4.doubleval", "123.456", PHP_INI_ALL, OnUpdateDouble, mydouble, zend_sample4_globals, sample4_globals)
+STD_PHP_INI_ENTRY("sample4.boolval", "1", PHP_INI_ALL, OnUpdateBool, mybool, zend_sample4_globals, sample4_globals)
+
+注意在这一点上，如果DISPLAY_INI_ENTRIES()被调用，"sample4.boolval" 这个布尔类型的INI设置会像其他的设置一样以字符串被显示出来；然而，优先以字符串输出的是"on"或者“off”。为了确认这些显示的值是有意义的，你可以在后面的两个方法之中任选一个，其中一个是切换到STD_PHP_INI_ENTRY_EX()宏创建一个显示的方法，另一个是你可以任意使用可以帮到你的宏：
+
+
+STD_PHP_INI_BOOLEAN("sample4.boolval", "1", 
+    PHP_INI_ALL, OnUpdateBool, mybool, 
+    zend_sample4_globals *, sample4_globals)
+这种特定类型的宏跟在INI家族中的布尔是不一样的，它仅仅提供一个显示处理者来将开启的设置为“on”，关闭的设置为"off"。

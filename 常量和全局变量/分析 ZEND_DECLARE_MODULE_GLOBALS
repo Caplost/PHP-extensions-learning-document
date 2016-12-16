@@ -1,0 +1,13 @@
+分析 ZEND_DECLARE_MODULE_GLOBALS
+
+#define ZEND_DECLARE_MODULE_GLOBALS(module_name) 	zend_##module_name##_globals module_name##_globals;
+
+
+所以
+
+ZEND_DECLARE_MODULE_GLOBALS(yii)
+
+实际代码为
+
+
+zend_yii_globals yii_globals;

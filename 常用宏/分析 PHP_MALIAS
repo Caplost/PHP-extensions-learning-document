@@ -1,0 +1,32 @@
+分析 PHP_MALIAS
+
+#define PHP_MALIAS      ZEND_MALIAS
+
+#define ZEND_MN(name) zim_##name
+
+#define ZEND_MALIAS(classname, name, alias, arg_info, flags) 				\
+        ZEND_FENTRY(name, ZEND_MN(classname##_##alias), arg_info, flags)
+
+
+#define ZEND_FENTRY(zend_name, name, arg_info, flags)						\
+		{ #zend_name, name, arg_info, (uint32_t) (sizeof(arg_info)/sizeof(struct _zend_internal_arg_info)-1), flags },
+
+
+
+参数
+
+classname	代码 类名
+
+name    代码  新的方法名
+
+alias   代码  被替换的方法，该方法必须是已经定义好的
+
+flags   宏  方法的访问权限等标记
+
+
+
+
+
+
+
+

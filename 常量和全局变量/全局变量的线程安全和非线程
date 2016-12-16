@@ -1,0 +1,43 @@
+全局变量的线程安全和非线程
+
+
+
+线程安全下
+
+static void php_sample4_globals_ctor(zend_sample4_globals *sample4_globals TSRMLS_DC)
+{
+    /* Initialize a new zend_sample4_globals struct
+     * During thread spin-up */
+     sample4_globals->counter = 0;
+}
+ 
+static void php_sample4_globals_dtor(zend_sample4_globals *sample4_globals TSRMLS_DC)
+{
+    /* Any resources allocated during initialization
+     * May be freed here */
+}
+
+
+PHP_MINIT_FUNCTION(sample4) {
+
+    REGISTER_STRING_CONSTANT("SAMPLE4_VERSION", PHP_SAMPLE4_EXTVER, CONST_CS | CONST_PERSISTENT);
+
+#ifdef ZTS
+    ts_allocate_id(&sample4_globals_id, sizeof(zend_sample4_globals), (ts_allocate_ctor)php_sample4_globals_ctor, (ts_allocate_dtor)php_sample4_globals_dtor);
+#else
+    php_sample4_globals_ctor(&sample4_globals TSRMLS_CC);
+#endif
+
+    return SUCCESS;
+}
+ 
+PHP_MSHUTDOWN_FUNCTION(sample4) {
+
+#ifndef ZTS
+    php_sample4_globals_dtor(&sample4_globals TSRMLS_CC);
+#endif
+
+    return SUCCESS;
+}
+
+

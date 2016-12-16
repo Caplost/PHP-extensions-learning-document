@@ -1,0 +1,66 @@
+分析PHP_ME
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_swoole_server__construct, 0, 0, 2)
+                ZEND_ARG_INFO(0, host)
+                ZEND_ARG_INFO(0, port)
+                ZEND_ARG_INFO(0, mode)
+                ZEND_ARG_INFO(0, sock_type)
+ZEND_END_ARG_INFO()
+
+static zend_function_entry yii_method[] = {
+	PHP_ME(yii, get, NULL, ZEND_ACC_PUBLIC)
+	PHP_ME(swoole, __construct, arginfo_swoole_server__construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+    { NULL, NULL, NULL}
+};
+
+
+#define PHP_ME          ZEND_ME
+
+#define ZEND_MN(name) zim_##name
+
+#define ZEND_ME(classname, name, arg_info, flags)	ZEND_FENTRY(name, ZEND_MN(classname##_##name), arg_info, flags)
+
+#define ZEND_FENTRY(zend_name, name, arg_info, flags)	{ #zend_name, name, arg_info, (uint32_t) (sizeof(arg_info)/sizeof(struct _zend_internal_arg_info)-1), flags },
+
+所以 PHP_ME实际为(classname, name, arg_info, flags)
+
+{ #name, zim_##classname##_##name, arg_info, (uint32_t) (sizeof(arg_info)/sizeof(struct _zend_internal_arg_info)-1), 0 },
+
+
+参数
+
+classname 代码 类名
+
+name  代码 方法名
+
+arg_info   zend_internal_arg_info结构体类型 数组指针  就是 ZEND_BEGIN_ARG_INFO_EX 和 ZEND_END_ARG_INFO 之间定义的那部分
+
+flags  掩码 可赋值 ZEND_ACC_PUBLIC等
+
+
+/* method flags (special method detection) */
+#define ZEND_ACC_CTOR		0x2000  // 定义构造函数
+#define ZEND_ACC_DTOR		0x4000  // 定义析构函数
+#define ZEND_ACC_CLONE		0x8000  // 定义克隆
+
+
+ZEND_ACC_PUBLIC|ZEND_ACC_CTOR是我们常见的掩码或运算，代表它是一个public类型构造函数
+
+
+/* method flags (types) */
+#define ZEND_ACC_STATIC			0x01
+#define ZEND_ACC_ABSTRACT		0x02
+#define ZEND_ACC_FINAL			0x04
+#define ZEND_ACC_IMPLEMENTED_ABSTRACT		0x08
+
+定义static的属性与方法只是在掩码标志中加入ZEND_ACC_STATIC即可，其他方法类型也是如此
+
+
+不要将ZEND_ACC_CTOR与ZEND_ACC_DTOR用在其它的方法上面。其它的一些魔术方法，如__get,__call等大都需要arginfo
+
+
+
+
+
+
+

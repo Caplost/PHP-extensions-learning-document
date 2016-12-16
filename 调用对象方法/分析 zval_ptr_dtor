@@ -1,0 +1,36 @@
+分析 zval_ptr_dtor
+
+
+ZEND_FUNCTION(test)
+{
+    zval *obj;
+    MAKE_STD_ZVAL(obj); // 该宏php7已废弃
+    object_init_ex(obj, user_ce);
+
+    //如果确认此类没有构造函数就不用调用了。
+    call_user_function(NULL, obj, "__construct", "");
+    call_user_function(NULL, obj, "echo", "");
+    zval_ptr_dtor(&obj);
+
+    return;
+}
+
+
+#define zval_ptr_dtor(zv) i_zval_ptr_dtor(zv ZEND_FILE_LINE_CC)
+
+# define ZEND_FILE_LINE_CC
+
+static zend_always_inline void i_zval_ptr_dtor(zval *zval_ptr ZEND_FILE_LINE_DC)
+{
+	if (Z_REFCOUNTED_P(zval_ptr)) {
+		if (!Z_DELREF_P(zval_ptr)) {
+			_zval_dtor_func_for_ptr(Z_COUNTED_P(zval_ptr) ZEND_FILE_LINE_RELAY_CC);
+		} else {
+			GC_ZVAL_CHECK_POSSIBLE_ROOT(zval_ptr);
+		}
+	}
+}
+
+# define ZEND_FILE_LINE_DC
+
+

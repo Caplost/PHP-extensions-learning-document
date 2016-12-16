@@ -1,0 +1,35 @@
+分析 zend_class_implements
+
+PHP_MINIT_FUNCTION(test)
+{
+    zend_class_entry object_init_ce, component_init_ce, model_init_ce;
+
+    INIT_CLASS_ENTRY(object_init_ce, "object", object_methods);
+    object_ce = zend_register_internal_interface(&object_init_ce TSRMLS_CC);
+
+    INIT_CLASS_ENTRY(component_init_ce, "component", component_methods);
+    component_ce = zend_register_internal_class(&component_init_ce TSRMLS_CC);
+    zend_class_implements(component_ce TSRMLS_CC, 1, object_ce);
+
+    INIT_CLASS_ENTRY(model_init_ce, "model", model_methods);
+    model_ce = zend_register_internal_class_ex(&model_init_ce, component_ce, "component" TSRMLS_CC);
+    //注意：ZEND_ACC_FINAL是用来修饰方法的，而ZEND_ACC_FINAL_CLASS是用来修饰类的
+    model_ce->ce_flags |= ZEND_ACC_FINAL_CLASS;
+
+    return SUCCESS;
+}
+
+ZEND_API void zend_class_implements(zend_class_entry *class_entry, int num_interfaces, ...) 
+{
+	zend_class_entry *interface_entry;
+	va_list interface_list;
+	va_start(interface_list, num_interfaces);
+
+	while (num_interfaces--) {
+		interface_entry = va_arg(interface_list, zend_class_entry *);
+		zend_do_implement_interface(class_entry, interface_entry);
+	}
+
+	va_end(interface_list);
+}
+

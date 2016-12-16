@@ -1,0 +1,40 @@
+分析 ZEND_BEGIN_MODULE_GLOBALS
+
+ZEND_BEGIN_MODULE_GLOBALS(swoole)
+    long aio_thread_num;
+    zend_bool display_errors;
+    zend_bool cli;
+    zend_bool use_namespace;
+    key_t message_queue_key;
+    uint32_t socket_buffer_size;
+ZEND_END_MODULE_GLOBALS(swoole)
+
+
+分析上面的宏
+
+# define ZEND_BEGIN_MODULE_GLOBALS(module_name)	typedef struct _zend_##module_name##_globals {
+
+# define ZEND_END_MODULE_GLOBALS(module_name) } zend_##module_name##_globals;
+
+
+然后进行替换
+
+typedef struct _zend_swoole_globals {
+
+	long aio_thread_num;
+    zend_bool display_errors;
+    zend_bool cli;
+    zend_bool use_namespace;
+    key_t message_queue_key;
+    uint32_t socket_buffer_size;
+
+} zend_swoole_globals;    
+
+
+实际上是声明了一个zend_swoole_globals类型的结构体
+
+
+所以php中声明全局变量，必须对全局变量先定义，再声明
+
+
+

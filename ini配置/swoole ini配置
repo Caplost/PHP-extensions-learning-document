@@ -1,0 +1,82 @@
+swoole ini配置
+
+PHP_INI_BEGIN()
+STD_PHP_INI_ENTRY("swoole.aio_thread_num", "2", PHP_INI_ALL, OnUpdateLong, aio_thread_num, zend_swoole_globals, swoole_globals)
+STD_PHP_INI_ENTRY("swoole.display_errors", "On", PHP_INI_ALL, OnUpdateBool, display_errors, zend_swoole_globals, swoole_globals)
+/**
+ * namespace class style
+ */
+STD_PHP_INI_ENTRY("swoole.use_namespace", "Off", PHP_INI_SYSTEM, OnUpdateBool, use_namespace, zend_swoole_globals, swoole_globals)
+STD_PHP_INI_ENTRY("swoole.message_queue_key", "0", PHP_INI_ALL, OnUpdateString, message_queue_key, zend_swoole_globals, swoole_globals)
+/**
+ * Unix socket buffer size
+ */
+STD_PHP_INI_ENTRY("swoole.unixsock_buffer_size", "8388608", PHP_INI_ALL, OnUpdateLong, socket_buffer_size, zend_swoole_globals, swoole_globals)
+PHP_INI_END()
+
+
+分析 PHP_INI_BEGIN
+
+#define PHP_INI_BEGIN		ZEND_INI_BEGIN
+
+#define ZEND_INI_BEGIN()	static const zend_ini_entry_def ini_entries[] = {
+
+所以 PHP_INI_BEGIN()  为 static const zend_ini_entry_def ini_entries[] = {
+
+
+分析 PHP_INI_END
+
+#define PHP_INI_END			ZEND_INI_END
+
+#define ZEND_INI_END()		{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0} };
+
+所以 PHP_INI_END() 为 { NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0} };
+
+
+分析 STD_PHP_INI_ENTRY
+
+#define STD_PHP_INI_ENTRY		STD_ZEND_INI_ENTRY
+
+#	 define STD_ZEND_INI_ENTRY(name, default_value, modifiable, on_modify, property_name, struct_type, struct_ptr) 								\
+		 ZEND_INI_ENTRY2(name, default_value, modifiable, on_modify, (void *) XtOffsetOf(struct_type, property_name), (void *) &struct_ptr)
+
+#define ZEND_INI_ENTRY2(name, default_value, modifiable, on_modify, arg1, arg2) 																\
+	ZEND_INI_ENTRY2_EX(name, default_value, modifiable, on_modify, arg1, arg2, NULL)
+
+#define ZEND_INI_ENTRY2_EX(name, default_value, modifiable, on_modify, arg1, arg2, displayer) 													\
+	ZEND_INI_ENTRY3_EX(name, default_value, modifiable, on_modify, arg1, arg2, NULL, displayer)
+
+#define ZEND_INI_ENTRY3_EX(name, default_value, modifiable, on_modify, arg1, arg2, arg3, displayer) 											\
+	{ name, on_modify, arg1, arg2, arg3, default_value, displayer, modifiable, sizeof(name)-1, sizeof(default_value)-1 },		
+
+所以 STD_PHP_INI_ENTRY 为
+
+	{ name, on_modify, (void *) XtOffsetOf(struct_type, property_name), (void *) &struct_ptr, NULL, default_value, NULL, modifiable, sizeof(name)-1, sizeof(default_value)-1 },	
+
+
+
+所以整体为
+
+static const zend_ini_entry_def ini_entries[] = {
+
+	{ name, on_modify, (void *) XtOffsetOf(struct_type, property_name), (void *) &struct_ptr, NULL, default_value, NULL, modifiable, sizeof(name)-1, sizeof(default_value)-1 },	
+
+	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0} 
+
+};
+
+
+所以php的ini配置其实就是个结构体配置
+
+STD_PHP_INI_ENTRY 中参数的意义
+
+property_name  变量的名称  例如定义全局变量的名称  aio_thread_num
+
+struct_type 变量的类型 全局变量的名字 zend_swoole_globals
+
+struct_ptr 变量 全局变量 swoole_globals
+
+
+
+
+

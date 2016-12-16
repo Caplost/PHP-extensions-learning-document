@@ -1,0 +1,56 @@
+声明和访问INI设置
+
+
+#include "php_ini.h" 
+
+
+ZEND_INI_MH(php_sample4_modify_greeting) 
+{
+    if (new_value_length == 0) { 
+        return FAILURE;
+    }
+    return SUCCESS; 
+}
+
+
+PHP_INI_BEGIN()
+    PHP_INI_ENTRY("sample4.greeting", "Hello World", PHP_INI_ALL, php_sample4_modify_greeting)
+PHP_INI_END()
+
+
+分析
+
+sample4扩展的greeting配置选项，默认值为 "Hello World"
+
+PHP_INI_ENTRY第三个参数决定是否允许修改和能被修改的作用域
+第四个参数是回调函数，当INI的值被修改时候触发此回调函数
+
+
+PHP_INI_PERDIR	指令可以在php.ini、httpd.conf或.htaccess文件中修改
+PHP_INI_SYSTEM	指令可以在php.ini 和 httpd.conf 文件中修改
+PHP_INI_USER	指令可以在用户脚本中修改
+PHP_INI_ALL	指令可以在任何地方修改
+
+
+获取配置选项的值
+
+// char*类型的值被认为是属于ZEND引擎的，是不能修改的。正因为如此，你将本地变量设置进INI时候，它将在你的方法中被声明为const。并不是所有的INI值都是基于字符串的
+const char *greeting = INI_STR("sample4.greeting");
+long lval = INI_INT("sample4.intval"); 
+double dval = INI_FLT("sample4.fltval"); 
+zend_bool bval = INI_BOOL("sample4.boolval");
+
+
+访问级别
+
+SYSTEM	设置被放在php.ini中，或者在Apache的http.conf配置文件中的和，它在apache启动时候生效，被认为是设置的全局变量
+PERDIR	一些设置被放在Apache的http.conf的或者块中，或者.htaccess文件之中。原文：Any setting found in a or block within Apache's httpd.conf, or settings located in .htaccess files as well as certain other locations not exclusive to Apache are processed just prior to a given request if that request is within the appropriate directory or virtual host.
+USER	一旦脚本开始执行，唯一的改变INI设置的方法就是利用用户方法：ini_set()
+
+enTRy	指向zend引擎实际存储的INI设置，这种结构提供一些信息，包括现在的值、原始值、拥有模块、还有其他的一些在下面的 Listing 13.1 中的详细信息
+new_value	关于设置的值。如果处理方法返回SUCCESS，这个值将被填充进 enTRy->value ，如果 entry->orig_value 至今没有设置的话，当前的值将被旋转到这个位置，并且也会设置 enTRy->modified 这个标志。字符串的长度将被填充到 new_value_length。
+mh_arg1,2,3	这组指针（三个一组）提供了访问数据指针最初给出的INI设置的声明。在实践中，这些值都是通过内部引擎进程来调用的,所以你不需要担心它们
+stage	ZEND_INI_STAGE_s 这种形式里面有五个值，这五个由s代表的值为STARTUP, SHUTDOWN, ACTIVATE, DEACTIVATE, 或者 RUNTIME，这些常量分别对应 MINIT, MSHUTDOWN, RINIT, RSHUTDOWN 还有 处于活跃状态正在执行的脚本。
+
+
+

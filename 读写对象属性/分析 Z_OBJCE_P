@@ -1,0 +1,8 @@
+分析 Z_OBJCE_P
+
+#define Z_OBJCE_P(zval_p)			Z_OBJCE(*(zval_p))
+
+#define Z_OBJCE(zval)				(Z_OBJ(zval)->ce)
+
+#define Z_OBJ(zval)					(zval).value.obj
+

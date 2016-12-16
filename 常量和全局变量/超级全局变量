@@ -1,0 +1,39 @@
+超级全局变量
+
+
+定义session超全局变量
+
+PHP_MINIT_FUNCTION(session) {
+        zend_register_auto_global("_SESSION",
+                            sizeof("_SESSION") - 1,
+                            NULL TSRMLS_CC);
+        return SUCCESS;
+}
+
+
+获取超级全局变量
+
+zend_bool php_sample4_autoglobal_callback(char *name, uint name_len TSRMLS_DC)
+{
+    zval *sample4_val;
+    int i;
+    MAKE_STD_ZVAL(sample4_val);
+    array_init(sample4_val);
+    for(i = 0; i < 10000; i++) {
+        add_next_index_long(sample4_val, i);
+    }
+    ZEND_SET_SYMBOL(&EG(symbol_table), "_SAMPLE4", sample4_val);
+    return 0;
+}
+ 
+PHP_MINIT_FUNCTION(sample4) {
+    zend_register_auto_global("_SAMPLE4", sizeof("_SAMPLE4") - 1
+#ifdef ZEND_ENGINE_2
+                , php_sample4_autoglobal_callback
+#endif
+                TSRMLS_CC);
+    return SUCCESS;
+}
+
+
+

@@ -1,0 +1,79 @@
+分析PHP_METHOD
+
+PHP_METHOD(yii, get)
+{
+    php_printf("我是public类型的方法\n");
+}
+
+
+#define PHP_METHOD  			ZEND_METHOD
+
+#define ZEND_MN(name) zim_##name
+
+#define ZEND_METHOD(classname, name)	ZEND_NAMED_FUNCTION(ZEND_MN(classname##_##name))
+
+#define ZEND_NAMED_FUNCTION(name)		void name(INTERNAL_FUNCTION_PARAMETERS)
+
+#define INTERNAL_FUNCTION_PARAMETERS zend_execute_data *execute_data, zval *return_value
+
+
+对上面的宏，从下往上进行层层分析
+
+
+#define ZEND_NAMED_FUNCTION(name)		void name(zend_execute_data *execute_data, zval *return_value)
+
+||
+
+#define ZEND_METHOD(classname, name)	void zim_##classname##_##name(zend_execute_data *execute_data, zval *return_value)
+
+
+参数
+
+classname 代码 类名
+
+name  代码 方法名
+
+
+
+所以 PHP_METHOD(yii, get){...}其实就是
+
+void zim_yii_get(zend_execute_data *execute_data, zval *return_value)
+{
+    php_printf("我是public类型的方法\n");
+}
+
+所以这里就是将类名和方法名外加一个前缀，组成唯一的C函数名
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,90 @@
+读写对象属性
+
+php代码
+
+class User
+{
+    public $age;
+    public static $area;
+
+    public function __construct($age, $area)
+    {
+        $this->age = $age;
+        self::$area = $area;
+
+        var_dump($this->age, self::$area);
+    }
+}
+
+
+扩展C源码
+
+PHP_METHOD(User, __construct)
+{
+    zval *age, *area;
+    zend_class_entry *ce;
+    ce = Z_OBJCE_P(getThis());
+
+    if( zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz", &age, &area) == FAILURE )
+    {
+        printf("Error\n");
+        RETURN_NULL();
+    }
+
+    zend_update_property(ce, getThis(), "age", sizeof("age")-1, age TSRMLS_CC);
+    zend_update_static_property(ce, "area", sizeof("area")-1, area TSRMLS_CC);
+
+    age = NULL;
+    area = NULL;
+
+    age = zend_read_property(ce, getThis(), "age", sizeof("age")-1, 0 TSRMLS_DC);
+    php_var_dump(&age, 1 TSRMLS_CC);
+
+    area = zend_read_static_property(ce, "area", sizeof("area")-1, 0 TSRMLS_DC);
+    php_var_dump(&area, 1 TSRMLS_CC);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

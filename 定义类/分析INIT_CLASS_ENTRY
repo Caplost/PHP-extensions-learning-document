@@ -1,0 +1,168 @@
+分析INIT_CLASS_ENTRY
+
+
+PHP_MINIT_FUNCTION(yii)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    myclass_ce = zend_register_internal_class(&ce TSRMLS_CC);
+    return SUCCESS;
+}
+
+
+#define INIT_CLASS_ENTRY(class_container, class_name, functions)	INIT_OVERLOADED_CLASS_ENTRY(class_container, class_name, functions, NULL, NULL, NULL)
+
+#define INIT_OVERLOADED_CLASS_ENTRY(class_container, class_name, functions, handle_fcall, handle_propget, handle_propset) 															\
+	INIT_OVERLOADED_CLASS_ENTRY_EX(class_container, class_name, sizeof(class_name)-1, functions, handle_fcall, handle_propget, handle_propset, NULL, NULL)
+
+#define INIT_OVERLOADED_CLASS_ENTRY_EX(class_container, class_name, class_name_len, functions, handle_fcall, handle_propget, handle_propset, handle_propunset, handle_propisset) 	\
+	{																																												\
+		zend_string *cl_name;																																						\
+		cl_name = zend_string_init(class_name, class_name_len, 1);																													\
+		class_container.name = zend_new_interned_string(cl_name);																													\
+		INIT_CLASS_ENTRY_INIT_METHODS(class_container, functions, handle_fcall, handle_propget, handle_propset, handle_propunset, handle_propisset) 								\
+	}
+
+#define INIT_CLASS_ENTRY_INIT_METHODS(class_container, functions, handle_fcall, handle_propget, handle_propset, handle_propunset, handle_propisset) 								\
+	{															\
+		class_container.constructor = NULL;						\
+		class_container.destructor = NULL;						\
+		class_container.clone = NULL;							\
+		class_container.serialize = NULL;						\
+		class_container.unserialize = NULL;						\
+		class_container.create_object = NULL;					\
+		class_container.interface_gets_implemented = NULL;		\
+		class_container.get_static_method = NULL;				\
+		class_container.__call = handle_fcall;					\
+		class_container.__callstatic = NULL;					\
+		class_container.__tostring = NULL;						\
+		class_container.__get = handle_propget;					\
+		class_container.__set = handle_propset;					\
+		class_container.__unset = handle_propunset;				\
+		class_container.__isset = handle_propisset;				\
+		class_container.__debugInfo = NULL;						\
+		class_container.serialize_func = NULL;					\
+		class_container.unserialize_func = NULL;				\
+		class_container.serialize = NULL;						\
+		class_container.unserialize = NULL;						\
+		class_container.parent = NULL;							\
+		class_container.num_interfaces = 0;						\
+		class_container.traits = NULL;							\
+		class_container.num_traits = 0;							\
+		class_container.trait_aliases = NULL;					\
+		class_container.trait_precedences = NULL;				\
+		class_container.interfaces = NULL;						\
+		class_container.get_iterator = NULL;					\
+		class_container.iterator_funcs.funcs = NULL;			\
+		class_container.info.internal.module = NULL;			\
+		class_container.info.internal.builtin_functions = functions;	\
+	}
+
+
+也就是说
+
+PHP_MINIT_FUNCTION(yii){...}实际情况为
+
+int zm_startup_yii(int type, int module_number)
+{
+    zend_class_entry ce;
+   
+    {																																												
+		zend_string *cl_name;																																						
+		cl_name = zend_string_init("yii", sizeof("yii")-1, 1);																													
+		ce.name = zend_new_interned_string(cl_name);
+																															
+		{														
+			ce.constructor = NULL;						
+			ce.destructor = NULL;						
+			ce.clone = NULL;							
+			ce.serialize = NULL;						
+			ce.unserialize = NULL;						
+			ce.create_object = NULL;					
+			ce.interface_gets_implemented = NULL;		
+			ce.get_static_method = NULL;				
+			ce.__call = NULL;					
+			ce.__callstatic = NULL;					
+			ce.__tostring = NULL;						
+			ce.__get = NULL;					
+			ce.__set = NULL;					
+			ce.__unset = NULL;				
+			ce.__isset = NULL;				
+			ce.__debugInfo = NULL;						
+			ce.serialize_func = NULL;					
+			ce.unserialize_func = NULL;				
+			ce.serialize = NULL;						
+			ce.unserialize = NULL;						
+			ce.parent = NULL;							
+			ce.num_interfaces = 0;						
+			ce.traits = NULL;							
+			ce.num_traits = 0;							
+			ce.trait_aliases = NULL;					
+			ce.trait_precedences = NULL;				
+			ce.interfaces = NULL;						
+			ce.get_iterator = NULL;					
+			ce.iterator_funcs.funcs = NULL;			
+			ce.info.internal.module = NULL;			
+			ce.info.internal.builtin_functions = yii_method;	
+		}							
+	}
+
+    yii_ce = zend_register_internal_class(&ce TSRMLS_CC);
+
+    return SUCCESS;
+}
+
+
+INIT_CLASS_ENTRY(class_container, class_name, functions)
+
+参数
+
+class_container 类的结构体指针， class_container是 “类容器”的意思
+
+class_name 类名，字符串
+
+functions 类的方法，是个数组，函数结构体类型
+
+
+
+
+初始化类，其实就是类本身被定义为一个结构体。类的名字，各种特性，魔术方法，方法，访问权限，接口等都是这个结构体的成员。
+所以初始化类，就是给结构体成员赋值
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

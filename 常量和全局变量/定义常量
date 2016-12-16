@@ -1,0 +1,36 @@
+定义常量
+
+PHP_MINIT_FUNCTION(sample4) {
+    REGISTER_STRING_CONSTANT("SAMPLE4_VERSION", PHP_SAMPLE4_EXTVER, CONST_CS | CONST_PERSISTENT);
+    return SUCCESS;
+}
+
+常用注册常量的宏
+
+#define REGISTER_NULL_CONSTANT(name, flags)  zend_register_null_constant((name), sizeof(name)-1, (flags), module_number)
+#define REGISTER_BOOL_CONSTANT(name, bval, flags)  zend_register_bool_constant((name), sizeof(name)-1, (bval), (flags), module_number)
+#define REGISTER_LONG_CONSTANT(name, lval, flags)  zend_register_long_constant((name), sizeof(name)-1, (lval), (flags), module_number)
+#define REGISTER_DOUBLE_CONSTANT(name, dval, flags)  zend_register_double_constant((name), sizeof(name)-1, (dval), (flags), module_number)
+#define REGISTER_STRING_CONSTANT(name, str, flags)  zend_register_string_constant((name), sizeof(name)-1, (str), (flags), module_number)
+#define REGISTER_STRINGL_CONSTANT(name, str, len, flags)  zend_register_stringl_constant((name), sizeof(name)-1, (str), (len), (flags), module_number)
+
+
+REGISTER_STRING_CONSTANT(name, str, flags)
+
+参数
+
+name 常量名 必须是 “” 字符串，不能是指针，因为内部会用到name的计算
+
+str 常量的值
+
+flags  标记  以通过两个可以标识位的按位或组合传入。CONST_CS标识是否大小写敏感，一般情况下CONST_CS标识是默认使用的。对于一些特殊的 情况，比如TRUE,FALSE,NULL等等，这个参数将被省略。
+
+在|后的标识位中的标识符说明了该常量的作用域和生命周期。当我们在MINIT中定义常量时，你可能需要在多个请求中使用这个常量，当你在RINIT中定义常量时，这个 常量会在当前请求结束的时候销毁。
+
+CONST_CS 表示区分大小写
+CONST_PERSISTENT 表示持续性
+CONST_CT_SUBST 表示允许编译时替换
+
+所以定义常量的时候 CONST_CS和CONST_PERSISTENT必须都带上
+
+

@@ -1,0 +1,199 @@
+扩展中声明一个php函数
+
+声明一个函数
+
+PHP_FUNCTION(confirm_yii_compiled)
+{
+	char *arg = NULL;
+	size_t arg_len, len;
+	zend_string *strg;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
+		return;
+	}
+
+	strg = strpprintf(0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "yii", arg);
+
+	RETURN_STR(strg);
+}
+
+接下来，我们将分析每个宏以及每个参数的意义。个人感觉对于PHP源码中C的宏的层层封装，在个人解析的时候异常艰难与痛苦。可能需要多个显示器辅助。不然效率异常的低。
+
+PHP_FUNCTION
+
+#define PHP_FUNCTION			ZEND_FUNCTION
+
+#define ZEND_FUNCTION(name)				ZEND_NAMED_FUNCTION(ZEND_FN(name))
+
+#define ZEND_FN(name) zif_##name
+
+#define ZEND_NAMED_FUNCTION(name)		void name(INTERNAL_FUNCTION_PARAMETERS)
+
+#define INTERNAL_FUNCTION_PARAMETERS zend_execute_data *execute_data, zval *return_value
+
+typedef struct _zend_execute_data    zend_execute_data;
+
+typedef struct _zval_struct     zval;
+
+// 参数执行数据
+struct _zend_execute_data {
+	const zend_op       *opline;           /* executed opline                */
+	zend_execute_data   *call;             /* current call                   */
+	zval                *return_value;
+	zend_function       *func;             /* executed funcrion              */
+	zval                 This;             /* this + call_info + num_args    */
+	zend_class_entry    *called_scope;
+	zend_execute_data   *prev_execute_data;
+	zend_array          *symbol_table;
+#if ZEND_EX_USE_RUN_TIME_CACHE
+	void               **run_time_cache;   /* cache op_array->run_time_cache */
+#endif
+#if ZEND_EX_USE_LITERALS
+	zval                *literals;         /* cache op_array->literals       */
+#endif
+};
+
+
+struct _zval_struct {
+	zend_value        value;			/* value */
+	union {
+		struct {
+			ZEND_ENDIAN_LOHI_4(
+				zend_uchar    type,			/* active type */
+				zend_uchar    type_flags,
+				zend_uchar    const_flags,
+				zend_uchar    reserved)	    /* call info for EX(This) */
+		} v;
+		uint32_t type_info;
+	} u1;
+	union {
+		uint32_t     var_flags;
+		uint32_t     next;                 /* hash collision chain */
+		uint32_t     cache_slot;           /* literal cache slot */
+		uint32_t     lineno;               /* line number (for ast nodes) */
+		uint32_t     num_args;             /* arguments number for EX(This) */
+		uint32_t     fe_pos;               /* foreach position */
+		uint32_t     fe_iter_idx;          /* foreach iterator index */
+	} u2;
+};
+
+
+以上就是我们将每个宏分析到最底层了。然后我们再从最底层，一层层的向上套
+
+#define ZEND_NAMED_FUNCTION(name)		void name(zend_execute_data *execute_data, zval *return_value)
+
+||
+
+#define ZEND_FUNCTION(name)				void zif_##name(zend_execute_data *execute_data, zval *return_value)
+
+因此，当我们定义一个PHP_FUNCTION(confirm_yii_compiled)的时候，其实定义的是
+
+void zif_confirm_yii_compiled(zend_execute_data *execute_data, zval *return_value)
+
+所以函数声明的全部内容，实际是声明下面一个C函数
+
+void zif_confirm_yii_compiled(zend_execute_data *execute_data, zval *return_value)
+{
+	char *arg = NULL;
+	size_t arg_len, len;
+	zend_string *strg;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &arg, &arg_len) == FAILURE) {
+		return;
+	}
+
+	strg = strpprintf(0, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "yii", arg);
+
+	RETURN_STR(strg);
+}
+
+我们可以看到这里函数有两个参数，分别是execute_data和return_value
+第一个参数execute_data，执行数据，就是保存定义的函数的参数信息
+第二个参数return_value，返回值，就是保存函数最后返回结果
+
+这里我们再对这个函数中的宏，再进行分析
+
+ZEND_NUM_ARGS()
+
+#define ZEND_NUM_ARGS()						EX_NUM_ARGS()
+
+#define EX_NUM_ARGS()			ZEND_CALL_NUM_ARGS(execute_data)
+
+#define ZEND_CALL_NUM_ARGS(call) (call)->This.u2.num_args
+
+
+struct _zend_execute_data {
+	const zend_op       *opline;           /* executed opline                */
+	zend_execute_data   *call;             /* current call                   */
+	zval                *return_value;
+	zend_function       *func;             /* executed funcrion              */
+	zval                 This;             /* this + call_info + num_args    */
+	zend_class_entry    *called_scope;
+	zend_execute_data   *prev_execute_data;
+	zend_array          *symbol_table;
+#if ZEND_EX_USE_RUN_TIME_CACHE
+	void               **run_time_cache;   /* cache op_array->run_time_cache */
+#endif
+#if ZEND_EX_USE_LITERALS
+	zval                *literals;         /* cache op_array->literals       */
+#endif
+};
+
+
+以上就是我们将每个宏分析到最底层了。然后我们再从最底层，一层层的向上套
+
+#define EX_NUM_ARGS()			(execute_data)->This.u2.num_args
+
+||
+
+#define ZEND_NUM_ARGS()			(execute_data)->This.u2.num_args
+
+------------------------------------------------------------------------------------
+
+接下来是
+
+RETURN_STR(strg)
+
+#define RETURN_STR(s) 					{ RETVAL_STR(s); return; }
+
+#define RETVAL_STR(s)			 		ZVAL_STR(return_value, s)
+
+#define ZVAL_STR(z, s) do {						\
+		zval *__z = (z);						\
+		zend_string *__s = (s);					\
+		Z_STR_P(__z) = __s;						\
+		/* interned strings support */			\
+		Z_TYPE_INFO_P(__z) = ZSTR_IS_INTERNED(__s) ? IS_INTERNED_STRING_EX : IS_STRING_EX; \
+	} while (0)
+
+以上就是我们将每个宏分析到最底层了。然后我们再从最底层，一层层的向上套
+
+
+#define RETVAL_STR(s) do {						\
+		zval *__z = (return_value);				\
+		zend_string *__s = (s);					\
+		Z_STR_P(__z) = __s;						\
+		/* interned strings support */			\
+		Z_TYPE_INFO_P(__z) = ZSTR_IS_INTERNED(__s) ? IS_INTERNED_STRING_EX : IS_STRING_EX; \
+	} while (0)
+
+||
+
+#define RETURN_STR(s) 					{       \
+
+	do {										\
+		zval *__z = (return_value);				\
+		zend_string *__s = (s);					\
+		Z_STR_P(__z) = __s;						\
+		/* interned strings support */			\
+		Z_TYPE_INFO_P(__z) = ZSTR_IS_INTERNED(__s) ? IS_INTERNED_STRING_EX : IS_STRING_EX; \
+	} while (0)									
+												\
+	return; 
+}
+
+
+因此我们看到的是，定义的函数的参数还有返回结果都各自有一个结构体保存信息
+至此，我们已经分析完了如何在扩展中声明一个函数
+
+特别注意，在源码中一定要使用宏，不要直接调用php源码声明的底层函数，因为在其他版本中宏的实现可能存在差异。

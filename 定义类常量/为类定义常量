@@ -1,0 +1,79 @@
+为类定义常量
+
+
+PHP_MINIT_FUNCTION(yii)
+{
+    zend_class_entry ce;
+    INIT_CLASS_ENTRY(ce, "yii", yii_method);
+    yii_ce = zend_register_internal_class(&ce TSRMLS_CC);
+    zend_declare_property_null(yii_ce, "uid", strlen("uid"), ZEND_ACC_PUBLIC TSRMLS_CC);
+    zend_declare_class_constant_string(yii_ce, "ENV", strlen("ENV"), "DEV" TSRMLS_DC);
+
+    return SUCCESS;
+}
+
+
+php为定义各种不同默认值的常量提供了对应的函数
+
+
+ZEND_API int zend_declare_class_constant(zend_class_entry *ce, const char *name, size_t name_length, zval *value)
+
+ZEND_API int zend_declare_class_constant_null(zend_class_entry *ce, const char *name, size_t name_length)
+
+ZEND_API int zend_declare_class_constant_long(zend_class_entry *ce, const char *name, size_t name_length, zend_long value)
+
+ZEND_API int zend_declare_class_constant_bool(zend_class_entry *ce, const char *name, size_t name_length, zend_bool value)
+
+ZEND_API int zend_declare_class_constant_double(zend_class_entry *ce, const char *name, size_t name_length, double value) 
+
+ZEND_API int zend_declare_class_constant_stringl(zend_class_entry *ce, const char *name, size_t name_length, const char *value, size_t value_length)
+
+ZEND_API int zend_declare_class_constant_string(zend_class_entry *ce, const char *name, size_t name_length, const char *value) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

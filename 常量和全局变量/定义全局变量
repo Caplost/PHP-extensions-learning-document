@@ -1,0 +1,26 @@
+定义全局变量
+
+定义全局变量
+
+ZEND_BEGIN_MODULE_GLOBALS(sample4)
+    unsigned long counter;  // 定义了long类型名为counter的全局变量
+    char *name; // 定义了char*类型名为name的全局变量
+ZEND_END_MODULE_GLOBALS(sample4)
+
+声明全局变量
+
+ZEND_DECLARE_MODULE_GLOBALS(sample4);
+
+
+
+访问全局变量
+
+SAMPLE4_G(counter)
+
+
+注意这里sample4和SAMPLE4都是扩展的名字，如果是其他扩展要改成相应的名字
+
+
+
+
+
